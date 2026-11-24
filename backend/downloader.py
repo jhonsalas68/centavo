@@ -20,13 +20,14 @@ USER_AGENT = (
 )
 
 def get_ffmpeg_path():
-    """Obtiene la ruta binaria ejecutable de FFmpeg (sistema en Linux o imageio-ffmpeg en Windows)."""
-    if os.name != "nt":
-        return "ffmpeg"
+    """Obtiene el directorio real de FFmpeg/FFprobe en Linux (/usr/bin) o el ejecutable en Windows."""
+    sys_ffmpeg = shutil.which("ffmpeg")
+    if sys_ffmpeg:
+        return os.path.dirname(sys_ffmpeg)
     try:
         return imageio_ffmpeg.get_ffmpeg_exe()
     except Exception:
-        return "ffmpeg"
+        return None
 
 def get_cookie_file():
     """Copia las cookies a /tmp (escribible) desde Render Secret Files (/etc/secrets/cookies.txt) o YOUTUBE_COOKIES."""
@@ -71,7 +72,6 @@ def build_base_opts(extra_opts=None, extractor_args=None):
         'noplaylist': True,
         'geo_bypass': True,
         'source_address': '0.0.0.0',  # Forzar IPv4 para evitar bloqueos IPv6 en cloud
-        'ffmpeg_location': get_ffmpeg_path(),
         'js_runtimes': {'node': {}, 'deno': {}},
         'remote_components': ['ejs:github'],
         'http_headers': {
@@ -81,6 +81,9 @@ def build_base_opts(extra_opts=None, extractor_args=None):
         'socket_timeout': 20,
         'retries': 3,
     }
+    ffmpeg_loc = get_ffmpeg_path()
+    if ffmpeg_loc:
+        opts['ffmpeg_location'] = ffmpeg_loc
     cookie_file = get_cookie_file()
     if cookie_file:
         opts['cookiefile'] = cookie_file
@@ -354,7 +357,7 @@ def download_media(url: str, format_id: str, is_audio: bool = False, custom_titl
                 header = f.read(12)
             if len(header) >= 8 and header[4:8] != b"ftyp":
                 fixed_path = os.path.join(DOWNLOADS_DIR, f"{file_id}_fixed.mp4")
-                ffmpeg_exe = get_ffmpeg_path()
+                ffmpeg_exe = shutil.which("ffmpeg") or get_ffmpeg_path() or "ffmpeg"
                 res = subprocess.run(
                     [
                         ffmpeg_exe, "-y", "-i", file_path,
