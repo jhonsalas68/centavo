@@ -265,38 +265,37 @@ def download_media(url: str, format_id: str, is_audio: bool = False, custom_titl
     out_template = os.path.join(DOWNLOADS_DIR, f"{file_id}_%(title).50s.%(ext)s")
 
     if is_audio:
-        # En servidores cloud, los streams solo-audio (DASH) a veces dan 403 sin PO token,
-        # así que probamos primero solo-audio y si falla, extraemos el MP3 del MP4 progresivo (formato 18)
-        audio_format_fallbacks = [
-            'bestaudio[protocol^=http][ext=m4a]/bestaudio[protocol^=http]/bestaudio/best',
-            'best[protocol^=http][ext=mp4]/best',
-        ]
+        # En YouTube desde servidores cloud, extraer el MP3 del MP4 progresivo directo (formato 18)
+        # evita los errores 403/502 de los streams solo-audio DASH y termina en pocos segundos.
+        audio_fmt = (
+            'best[protocol^=http][ext=mp4]/bestaudio[protocol^=http]/best'
+            if is_youtube_url(url)
+            else 'bestaudio[protocol^=http]/best[protocol^=http]/best'
+        )
+        extra_opts = {
+            'format': audio_fmt,
+            'outtmpl': out_template,
+            'concurrent_fragment_downloads': 4,
+            'buffersize': 1024 * 1024,
+            'retries': 1,
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }],
+        }
         downloaded = False
         last_error = None
-        for fmt_expr in audio_format_fallbacks:
-            extra_opts = {
-                'format': fmt_expr,
-                'outtmpl': out_template,
-                'concurrent_fragment_downloads': 4,
-                'buffersize': 1024 * 1024,
-                'postprocessors': [{
-                    'key': 'FFmpegExtractAudio',
-                    'preferredcodec': 'mp3',
-                    'preferredquality': '192',
-                }],
-            }
-            for strategy in get_client_strategies(url):
-                ydl_opts = build_base_opts(extra_opts, extractor_args=strategy)
-                try:
-                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                        ydl.extract_info(url, download=True)
-                    downloaded = True
-                    break
-                except Exception as e:
-                    last_error = str(e)
-                    continue
-            if downloaded:
+        for strategy in get_client_strategies(url)[:2]:
+            ydl_opts = build_base_opts(extra_opts, extractor_args=strategy)
+            try:
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    ydl.extract_info(url, download=True)
+                downloaded = True
                 break
+            except Exception as e:
+                last_error = str(e)
+                continue
     else:
         if format_id and format_id not in ("best", "bestvideo+bestaudio/best"):
             selected_format = (
