@@ -259,11 +259,52 @@ def extract_video_info(url: str):
         "audio_formats": audio_options
     }
 
-def download_media(url: str, format_id: str, is_audio: bool = False, custom_title: str = None):
+def format_speed(speed_bytes):
+    if not speed_bytes:
+        return ""
+    mb = speed_bytes / (1024 * 1024)
+    if mb >= 1:
+        return f"{mb:.1f} MB/s"
+    return f"{speed_bytes / 1024:.0f} KB/s"
+
+def download_media(url: str, format_id: str, is_audio: bool = False, custom_title: str = None, progress_callback=None):
     """Descarga el video o audio especificado y devuelve la ruta local del archivo."""
     cleanup_old_files()
     file_id = str(uuid.uuid4())[:8]
     out_template = os.path.join(DOWNLOADS_DIR, f"{file_id}_%(title).50s.%(ext)s")
+
+    def notify(status, percent=None, eta=None, speed="", message=""):
+        if progress_callback:
+            try:
+                progress_callback(status=status, percent=percent, eta=eta, speed=speed, message=message)
+            except Exception:
+                pass
+
+    def ydl_progress_hook(d):
+        st = d.get('status')
+        if st == 'downloading':
+            total = d.get('total_bytes') or d.get('total_bytes_estimate') or 0
+            downloaded_b = d.get('downloaded_bytes') or 0
+            if total > 0:
+                raw_pct = min(100.0, (downloaded_b / total) * 100.0)
+                # Mapear 0-100% de descarga a 10-85% del progreso total
+                pct = int(10 + raw_pct * 0.75)
+            else:
+                pct = 35
+            eta = d.get('eta')
+            speed_str = format_speed(d.get('speed'))
+            msg = "Descargando audio..." if is_audio else "Descargando video..."
+            notify("downloading", percent=pct, eta=eta, speed=speed_str, message=msg)
+        elif st == 'finished':
+            msg = "Convirtiendo a MP3..." if is_audio else "Optimizando MP4..."
+            notify("processing", percent=88, eta=3, speed="", message=msg)
+
+    def ydl_postprocessor_hook(d):
+        if d.get('status') == 'started':
+            msg = "Convirtiendo audio a MP3 (192 kbps)..." if is_audio else "Uniendo audio y video en MP4..."
+            notify("processing", percent=92, eta=2, speed="", message=msg)
+
+    notify("starting", percent=5, eta=None, speed="", message="Conectando con la plataforma...")
 
     if is_audio:
         # En YouTube desde servidores cloud, extraer el MP3 del MP4 progresivo directo (formato 18)
@@ -279,6 +320,8 @@ def download_media(url: str, format_id: str, is_audio: bool = False, custom_titl
             'concurrent_fragment_downloads': 4,
             'buffersize': 1024 * 1024,
             'retries': 1,
+            'progress_hooks': [ydl_progress_hook],
+            'postprocessor_hooks': [ydl_postprocessor_hook],
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
@@ -320,6 +363,8 @@ def download_media(url: str, format_id: str, is_audio: bool = False, custom_titl
             'merge_output_format': 'mp4',
             'concurrent_fragment_downloads': 4,
             'buffersize': 1024 * 1024,
+            'progress_hooks': [ydl_progress_hook],
+            'postprocessor_hooks': [ydl_postprocessor_hook],
             'postprocessor_args': {
                 'Merger': ['-c:v', 'copy', '-c:a', 'aac', '-movflags', '+faststart'],
             },

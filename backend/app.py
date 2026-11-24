@@ -2,6 +2,7 @@ import os
 import re
 import time
 import uuid
+import threading
 from urllib.parse import quote
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Query
 from fastapi.concurrency import run_in_threadpool
@@ -11,10 +12,11 @@ from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 from backend.downloader import extract_video_info, download_media, cleanup_old_files
 
-app = FastAPI(title="Video Downloader Pro", version="2.2-ios")
+app = FastAPI(title="Video Downloader Pro", version="2.3-progress")
 
-# Registro en memoria de archivos ya listos para descarga instantánea (ideal para iOS Safari)
+# Registro en memoria de archivos listos y trabajos en curso con progreso en tiempo real
 PREPARED_FILES = {}
+JOBS = {}
 
 def purge_expired_prepared():
     now = time.time()
@@ -26,6 +28,9 @@ def purge_expired_prepared():
                 os.remove(info["path"])
             except Exception:
                 pass
+    expired_jobs = [k for k, v in JOBS.items() if now - v["created"] > 900]
+    for k in expired_jobs:
+        JOBS.pop(k, None)
 
 def make_safe_filename(clean_filename: str, is_audio: bool) -> str:
     target_ext = ".mp3" if is_audio else ".mp4"
@@ -62,21 +67,29 @@ async def get_info(req: InfoRequest):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@app.post("/api/prepare")
-async def prepare_download(req: PrepareRequest):
-    """Prepara el archivo en el servidor y devuelve un enlace directo instantáneo (100% compatible con iOS Safari)."""
-    if not req.url or not req.url.strip():
-        raise HTTPException(status_code=400, detail="URL inválida.")
-    purge_expired_prepared()
+def _run_prepare_job(job_id: str, url: str, format_id: str, is_audio: bool):
+    def on_progress(status, percent=None, eta=None, speed="", message=""):
+        job = JOBS.get(job_id)
+        if not job:
+            return
+        job["status"] = status
+        if percent is not None:
+            job["percent"] = max(job["percent"], min(99, int(percent)))
+        job["eta"] = eta
+        if speed:
+            job["speed"] = speed
+        if message:
+            job["message"] = message
+
     try:
-        file_path, clean_filename = await run_in_threadpool(
-            download_media,
-            req.url.strip(),
-            req.format_id,
-            req.is_audio,
+        file_path, clean_filename = download_media(
+            url,
+            format_id,
+            is_audio,
+            progress_callback=on_progress,
         )
-        safe_name = make_safe_filename(clean_filename, req.is_audio)
-        media_type = "audio/mpeg" if req.is_audio else "video/mp4"
+        safe_name = make_safe_filename(clean_filename, is_audio)
+        media_type = "audio/mpeg" if is_audio else "video/mp4"
         token = uuid.uuid4().hex
         PREPARED_FILES[token] = {
             "path": file_path,
@@ -84,12 +97,67 @@ async def prepare_download(req: PrepareRequest):
             "media_type": media_type,
             "created": time.time(),
         }
-        return {
-            "download_url": f"/api/file/{token}",
-            "filename": safe_name,
-        }
+        job = JOBS.get(job_id)
+        if job:
+            job.update({
+                "status": "ready",
+                "percent": 100,
+                "eta": 0,
+                "message": "¡Archivo listo para guardar!",
+                "download_url": f"/api/file/{token}",
+                "filename": safe_name,
+            })
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        job = JOBS.get(job_id)
+        if job:
+            job.update({
+                "status": "error",
+                "error": str(e),
+                "message": str(e),
+            })
+
+@app.post("/api/prepare")
+async def prepare_download(req: PrepareRequest):
+    """Inicia la preparación en segundo plano y devuelve job_id para consultar % real y ETA."""
+    if not req.url or not req.url.strip():
+        raise HTTPException(status_code=400, detail="URL inválida.")
+    purge_expired_prepared()
+    job_id = uuid.uuid4().hex
+    JOBS[job_id] = {
+        "status": "starting",
+        "percent": 3,
+        "eta": None,
+        "speed": "",
+        "message": "Iniciando descarga en el servidor...",
+        "download_url": None,
+        "filename": None,
+        "error": None,
+        "created": time.time(),
+    }
+    t = threading.Thread(
+        target=_run_prepare_job,
+        args=(job_id, req.url.strip(), req.format_id, req.is_audio),
+        daemon=True,
+    )
+    t.start()
+    return {"job_id": job_id}
+
+@app.get("/api/status/{job_id}")
+async def job_status(job_id: str):
+    """Devuelve porcentaje real, velocidad, ETA y enlace final del trabajo."""
+    job = JOBS.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Trabajo de descarga no encontrado o expirado.")
+    return {
+        "status": job["status"],
+        "percent": job["percent"],
+        "eta": job["eta"],
+        "speed": job["speed"],
+        "message": job["message"],
+        "download_url": job["download_url"],
+        "filename": job["filename"],
+        "error": job["error"],
+    }
 
 @app.get("/api/file/{token}")
 async def serve_prepared_file(token: str):

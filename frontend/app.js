@@ -25,9 +25,25 @@ document.addEventListener('DOMContentLoaded', () => {
   const readyFileName = document.getElementById('readyFileName');
   const finalDownloadLink = document.getElementById('finalDownloadLink');
   const modalProgressBar = document.getElementById('modalProgressBar');
+  const modalStatusMsg = document.getElementById('modalStatusMsg');
+  const modalPercentText = document.getElementById('modalPercentText');
+  const modalEtaText = document.getElementById('modalEtaText');
+  const modalSpeedText = document.getElementById('modalSpeedText');
+  const modalElapsedText = document.getElementById('modalElapsedText');
+
+  let activePollInterval = null;
+  let activeElapsedInterval = null;
+
+  function stopDownloadPolling() {
+    if (activePollInterval) { clearInterval(activePollInterval); activePollInterval = null; }
+    if (activeElapsedInterval) { clearInterval(activeElapsedInterval); activeElapsedInterval = null; }
+  }
 
   if (closeDownloadModalBtn && downloadModal) {
-    closeDownloadModalBtn.addEventListener('click', () => downloadModal.classList.add('hidden'));
+    closeDownloadModalBtn.addEventListener('click', () => {
+      stopDownloadPolling();
+      downloadModal.classList.add('hidden');
+    });
   }
 
   const adGuideBtn = document.getElementById('adGuideBtn');
@@ -193,14 +209,40 @@ document.addEventListener('DOMContentLoaded', () => {
     resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
-  // Preparar archivo en servidor y mostrar botón nativo directo (100% compatible con iOS Safari)
+  function formatEta(seconds) {
+    if (seconds === null || seconds === undefined || isNaN(seconds)) {
+      return 'Calculando tiempo...';
+    }
+    const s = Math.max(1, Math.round(seconds));
+    if (s < 60) return `Faltan ~${s} seg`;
+    const mins = Math.floor(s / 60);
+    const rem = s % 60;
+    return `Faltan ~${mins}m ${rem}s`;
+  }
+
+  // Preparar archivo con progreso real (%, velocidad y tiempo estimado) + botón nativo para iOS Safari
   window.triggerDownload = async (encodedUrl, formatId, isAudio) => {
     const url = decodeURIComponent(encodedUrl);
     hideAlert();
+    stopDownloadPolling();
+
+    // Reiniciar UI del modal
+    modalProgressBar.style.width = '3%';
+    modalPercentText.textContent = '3%';
+    modalStatusMsg.textContent = 'Iniciando descarga en el servidor...';
+    modalEtaText.textContent = 'Calculando tiempo...';
+    modalSpeedText.textContent = '';
+    modalElapsedText.textContent = '0s transcurridos';
 
     modalPreparingState.classList.remove('hidden');
     modalReadyState.classList.add('hidden');
     downloadModal.classList.remove('hidden');
+
+    const startTime = Date.now();
+    activeElapsedInterval = setInterval(() => {
+      const secs = Math.floor((Date.now() - startTime) / 1000);
+      modalElapsedText.textContent = `${secs}s transcurridos`;
+    }, 1000);
 
     try {
       const res = await fetch('/api/prepare', {
@@ -216,26 +258,56 @@ document.addEventListener('DOMContentLoaded', () => {
           const errData = await res.json().catch(() => null);
           if (errData && errData.detail) msg = errData.detail;
         }
+        stopDownloadPolling();
         downloadModal.classList.add('hidden');
         showAlert(msg, 'error');
         return;
       }
 
-      const data = await res.json();
-      readyFileName.textContent = data.filename;
-      finalDownloadLink.href = data.download_url;
-      finalDownloadLink.setAttribute('download', data.filename);
+      const { job_id } = await res.json();
 
-      modalPreparingState.classList.add('hidden');
-      modalReadyState.classList.remove('hidden');
+      // Consultar progreso real cada 700ms
+      activePollInterval = setInterval(async () => {
+        try {
+          const stRes = await fetch(`/api/status/${job_id}`);
+          if (!stRes.ok) return;
+          const job = await stRes.json();
 
-      // En PC y Android iniciar automáticamente; en iOS el usuario pulsa el botón verde (requisito nativo de Safari)
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      if (!isIOS) {
-        finalDownloadLink.click();
-      }
+          const pct = Math.min(100, Math.max(3, job.percent || 3));
+          modalProgressBar.style.width = `${pct}%`;
+          modalPercentText.textContent = `${pct}%`;
+          if (job.message) modalStatusMsg.textContent = job.message;
+          modalEtaText.textContent = job.status === 'processing'
+            ? 'Casi listo (~3 seg)...'
+            : formatEta(job.eta);
+          modalSpeedText.textContent = job.speed ? `Velocidad: ${job.speed}` : '';
+
+          if (job.status === 'ready' && job.download_url) {
+            stopDownloadPolling();
+            readyFileName.textContent = job.filename || (isAudio ? 'audio.mp3' : 'video.mp4');
+            finalDownloadLink.href = job.download_url;
+            finalDownloadLink.setAttribute('download', readyFileName.textContent);
+
+            modalPreparingState.classList.add('hidden');
+            modalReadyState.classList.remove('hidden');
+
+            // En PC/Android descargar automáticamente; en iPhone el usuario toca el botón verde
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+              (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            if (!isIOS) {
+              finalDownloadLink.click();
+            }
+          } else if (job.status === 'error') {
+            stopDownloadPolling();
+            downloadModal.classList.add('hidden');
+            showAlert(job.error || 'Error al procesar el archivo.', 'error');
+          }
+        } catch (_) {
+          // Ignorar fallos momentáneos de red durante el polling
+        }
+      }, 700);
     } catch (err) {
+      stopDownloadPolling();
       downloadModal.classList.add('hidden');
       showAlert('Error de conexión al preparar la descarga. Intenta de nuevo.', 'error');
     }
