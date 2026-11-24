@@ -4,6 +4,7 @@ import time
 import uuid
 import re
 import shutil
+import subprocess
 import tempfile
 import yt_dlp
 import imageio_ffmpeg
@@ -157,7 +158,8 @@ def extract_video_info(url: str):
     video_options = []
     seen_resolutions = set()
 
-    # Priorizar formatos MP4/H.264 y progresivos (con audio incluido)
+    # Priorizar formatos directos HTTPS + H.264 (avc1) + MP4 sobre HLS (m3u8) o VP9/AV1
+    # Esto evita descargas corruptas/lentas en HLS y garantiza reproducción 100% en iOS/Android/PC
     def format_sort_key(f):
         height = f.get('height') or 0
         fid = str(f.get('format_id', '')).lower()
@@ -166,11 +168,13 @@ def extract_video_info(url: str):
                 height = 720
             elif 'sd' in fid:
                 height = 480
-        has_audio = 1 if (f.get('acodec') and f.get('acodec') != 'none') else 0
-        is_mp4 = 1 if f.get('ext') == 'mp4' else 0
+        proto = str(f.get('protocol', '')).lower()
+        is_direct_http = 1 if proto in ('https', 'http') else 0
         is_h264 = 1 if str(f.get('vcodec', '')).startswith('avc') else 0
+        is_mp4 = 1 if f.get('ext') == 'mp4' else 0
+        has_audio = 1 if (f.get('acodec') and f.get('acodec') != 'none') else 0
         tbr = f.get('tbr') or 0
-        return (height, has_audio, is_h264, is_mp4, tbr)
+        return (height, is_direct_http, is_h264, is_mp4, has_audio, tbr)
 
     video_candidates = [
         f for f in raw_formats
@@ -271,13 +275,15 @@ def download_media(url: str, format_id: str, is_audio: bool = False, custom_titl
         if format_id and format_id not in ("best", "bestvideo+bestaudio/best"):
             selected_format = (
                 f"{format_id}[acodec!=none]/"
+                f"{format_id}+bestaudio[protocol^=http][ext=m4a]/"
                 f"{format_id}+bestaudio[ext=m4a]/"
                 f"{format_id}+bestaudio/"
                 f"best[ext=mp4]/best"
             )
         else:
             selected_format = (
-                "best[ext=mp4][acodec!=none]/"
+                "best[protocol^=http][ext=mp4][acodec!=none]/"
+                "bestvideo[protocol^=http][vcodec^=avc][ext=mp4]+bestaudio[protocol^=http][ext=m4a]/"
                 "bestvideo[ext=mp4]+bestaudio[ext=m4a]/"
                 "bestvideo+bestaudio/best"
             )
@@ -286,14 +292,10 @@ def download_media(url: str, format_id: str, is_audio: bool = False, custom_titl
             'format': selected_format,
             'outtmpl': out_template,
             'merge_output_format': 'mp4',
-            'concurrent_fragment_downloads': 8,
+            'concurrent_fragment_downloads': 4,
             'buffersize': 1024 * 1024,
-            'postprocessors': [{
-                'key': 'FFmpegVideoRemuxer',
-                'preferedformat': 'mp4',
-            }],
             'postprocessor_args': {
-                'Merger': ['-c:v', 'copy', '-c:a', 'aac'],
+                'Merger': ['-c:v', 'copy', '-c:a', 'aac', '-movflags', '+faststart'],
             },
         }
 
@@ -318,8 +320,37 @@ def download_media(url: str, format_id: str, is_audio: bool = False, custom_titl
         raise FileNotFoundError("El archivo descargado no se pudo encontrar en el servidor.")
 
     file_path = matching_files[0]
-    filename = os.path.basename(file_path)
-    clean_name = filename[9:] if len(filename) > 9 else filename
+    orig_filename = os.path.basename(file_path)
+
+    # Verificar que el archivo sea un MP4 real (cabecera 'ftyp') y no un MPEG-TS de HLS renombrado
+    if not is_audio:
+        try:
+            with open(file_path, "rb") as f:
+                header = f.read(12)
+            if len(header) >= 8 and header[4:8] != b"ftyp":
+                fixed_path = os.path.join(DOWNLOADS_DIR, f"{file_id}_fixed.mp4")
+                ffmpeg_exe = get_ffmpeg_path()
+                res = subprocess.run(
+                    [
+                        ffmpeg_exe, "-y", "-i", file_path,
+                        "-c:v", "copy", "-c:a", "aac",
+                        "-movflags", "+faststart",
+                        fixed_path
+                    ],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=120
+                )
+                if res.returncode == 0 and os.path.exists(fixed_path) and os.path.getsize(fixed_path) > 0:
+                    try:
+                        os.remove(file_path)
+                    except Exception:
+                        pass
+                    file_path = fixed_path
+        except Exception:
+            pass
+
+    clean_name = orig_filename[9:] if len(orig_filename) > 9 else orig_filename
 
     expected_ext = ".mp3" if is_audio else ".mp4"
     base_part, cur_ext = os.path.splitext(clean_name)
