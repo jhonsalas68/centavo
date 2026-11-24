@@ -193,23 +193,28 @@ def extract_video_info(url: str):
             else:
                 continue
 
-        res_label = f"{height}p"
-        if height >= 2160:
-            res_label = "4K (2160p)"
-        elif height >= 1440:
-            res_label = "2K (1440p)"
-        elif height >= 1080:
-            res_label = "1080p Full HD"
-        elif height >= 720:
-            res_label = "720p HD (Rápido)" if (f.get('acodec') and f.get('acodec') != 'none') else "720p HD"
-        elif height >= 480:
-            res_label = "480p SD"
-        elif height >= 360:
-            res_label = "360p"
+        proto = str(f.get('protocol', '')).lower()
+        is_direct = proto in ('https', 'http')
 
-        if res_label in seen_resolutions:
+        if height >= 2160:
+            bucket, res_label = 2160, "4K (2160p)"
+        elif height >= 1440:
+            bucket, res_label = 1440, "2K (1440p)"
+        elif height >= 1080:
+            bucket, res_label = 1080, "1080p Full HD"
+        elif height >= 720:
+            bucket = 720
+            res_label = "720p HD (Rápido)" if (is_direct and f.get('acodec') and f.get('acodec') != 'none') else "720p HD"
+        elif height >= 480:
+            bucket, res_label = 480, "480p SD"
+        elif height >= 360:
+            bucket, res_label = 360, "360p"
+        else:
+            bucket, res_label = height, f"{height}p"
+
+        if bucket in seen_resolutions:
             continue
-        seen_resolutions.add(res_label)
+        seen_resolutions.add(bucket)
 
         size_bytes = f.get('filesize') or f.get('filesize_approx')
 
