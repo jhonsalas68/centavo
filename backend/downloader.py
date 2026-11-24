@@ -82,8 +82,14 @@ def extract_video_info(url: str):
 
     for f in sorted_formats:
         height = f.get('height')
+        fid = str(f.get('format_id', '')).lower()
         if not height:
-            continue
+            if 'hd' in fid:
+                height = 720
+            elif 'sd' in fid:
+                height = 480
+            else:
+                continue
         
         # Agrupar por resolución común
         res_label = f"{height}p"
@@ -94,7 +100,7 @@ def extract_video_info(url: str):
         elif height >= 1080:
             res_label = "1080p Full HD"
         elif height >= 720:
-            res_label = "720p HD"
+            res_label = "720p HD (Rápido)" if f.get('acodec') != 'none' else "720p HD"
         elif height >= 480:
             res_label = "480p SD"
         elif height >= 360:
@@ -160,6 +166,8 @@ def download_media(url: str, format_id: str, is_audio: bool = False, custom_titl
             'format': 'bestaudio/best',
             'outtmpl': out_template,
             'ffmpeg_location': ffmpeg_exe,
+            'concurrent_fragment_downloads': 10,
+            'buffersize': 1024 * 1024,
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
@@ -169,11 +177,12 @@ def download_media(url: str, format_id: str, is_audio: bool = False, custom_titl
             'no_warnings': True
         }
     else:
-        # Si se seleccionó un formato de video específico, unirlo con el mejor audio disponible
+        # Si el formato ya incluye audio, NO descargar audio adicional para máxima velocidad.
+        # Solo unir video+audio con '-c copy' (sin re-codificar, ultrarrápido).
         if format_id and format_id != "bestvideo+bestaudio/best":
-            selected_format = f"{format_id}+bestaudio/bestvideo+bestaudio/{format_id}/best"
+            selected_format = f"{format_id}[acodec!=none]/{format_id}+bestaudio[ext=m4a]/{format_id}+bestaudio/{format_id}/best"
         else:
-            selected_format = "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best[ext=mp4]/best"
+            selected_format = "best[ext=mp4]/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best"
 
         out_template = os.path.join(DOWNLOADS_DIR, f"{file_id}_%(title).50s.%(ext)s")
         ydl_opts = {
@@ -181,6 +190,11 @@ def download_media(url: str, format_id: str, is_audio: bool = False, custom_titl
             'outtmpl': out_template,
             'ffmpeg_location': ffmpeg_exe,
             'merge_output_format': 'mp4',
+            'concurrent_fragment_downloads': 10,
+            'buffersize': 1024 * 1024,
+            'postprocessor_args': {
+                'Merger': ['-c', 'copy']
+            },
             'quiet': True,
             'no_warnings': True
         }

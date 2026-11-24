@@ -184,17 +184,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (count <= 0) {
         clearInterval(interval);
+        countdownTimer.textContent = '0';
+        // Iniciar la descarga del archivo mediante enlace temporal
+        const downloadUrl = `/api/download?url=${encodeURIComponent(url)}&format_id=${encodeURIComponent(formatId)}&is_audio=${isAudio}`;
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.setAttribute('download', '');
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        // Dejar el modal 1.5s más indicando que ya está en marcha
         setTimeout(() => {
           downloadModal.classList.add('hidden');
-          // Iniciar la descarga del archivo mediante enlace temporal
-          const downloadUrl = `/api/download?url=${encodeURIComponent(url)}&format_id=${encodeURIComponent(formatId)}&is_audio=${isAudio}`;
-          const a = document.createElement('a');
-          a.href = downloadUrl;
-          a.setAttribute('download', '');
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-        }, 500);
+        }, 1500);
       }
     }, 1000);
   };
