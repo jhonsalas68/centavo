@@ -50,15 +50,16 @@ def get_client_strategies(url: str):
     """Devuelve estrategias de clientes de yt-dlp para evitar bloqueos de bot en servidores cloud."""
     if is_youtube_url(url):
         if get_cookie_file():
-            # Con cookies, mweb y web son los más estables y soportan sesión autenticada
+            # Con cookies + JS runtime (node), el cliente por defecto de yt-dlp es el mejor
             return [
-                {'youtube': {'player_client': ['mweb', 'web']}},
-                {'youtube': {'player_client': ['web_embedded', 'tv_embedded']}},
+                None,
+                {'youtube': {'player_client': ['web', 'mweb']}},
+                {'youtube': {'player_client': ['tv_embedded', 'android_vr']}},
             ]
         return [
+            None,
             {'youtube': {'player_client': ['tv_embedded', 'android_vr']}},
             {'youtube': {'player_client': ['android', 'mweb']}},
-            {'youtube': {'player_client': ['web_embedded', 'web']}},
         ]
     return [None]
 
@@ -70,6 +71,8 @@ def build_base_opts(extra_opts=None, extractor_args=None):
         'geo_bypass': True,
         'source_address': '0.0.0.0',  # Forzar IPv4 para evitar bloqueos IPv6 en cloud
         'ffmpeg_location': get_ffmpeg_path(),
+        'js_runtimes': {'node': {}, 'deno': {}},
+        'remote_components': ['ejs:github'],
         'http_headers': {
             'User-Agent': USER_AGENT,
             'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
