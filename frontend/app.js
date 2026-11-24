@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
     resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
-  // Cuenta regresiva antes de comenzar la descarga (Estrategia de Monetización)
+  // Cuenta regresiva antes de comenzar la descarga
   window.triggerDownload = (encodedUrl, formatId, isAudio) => {
     const url = decodeURIComponent(encodedUrl);
     let count = 3;
@@ -185,28 +185,58 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const interval = setInterval(() => {
       count--;
-      countdownTimer.textContent = count;
-      modalProgressBar.style.width = `${((3 - count) / 3) * 100}%`;
+      countdownTimer.textContent = Math.max(count, 0);
+      modalProgressBar.style.width = `${((3 - Math.max(count, 0)) / 3) * 100}%`;
 
       if (count <= 0) {
         clearInterval(interval);
-        countdownTimer.textContent = '0';
-        // Iniciar la descarga del archivo mediante enlace temporal
-        const downloadUrl = `/api/download?url=${encodeURIComponent(url)}&format_id=${encodeURIComponent(formatId)}&is_audio=${isAudio}`;
-        const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.setAttribute('download', '');
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-
-        // Dejar el modal 1.5s más indicando que ya está en marcha
-        setTimeout(() => {
-          downloadModal.classList.add('hidden');
-        }, 1500);
+        startVerifiedDownload(url, formatId, isAudio);
       }
     }, 1000);
   };
+
+  async function startVerifiedDownload(url, formatId, isAudio) {
+    const downloadUrl = `/api/download?url=${encodeURIComponent(url)}&format_id=${encodeURIComponent(formatId)}&is_audio=${isAudio}`;
+    try {
+      const res = await fetch(downloadUrl);
+      const contentType = (res.headers.get('content-type') || '').toLowerCase();
+
+      // Nunca permitir que el navegador descargue una página HTML de error o JSON
+      if (!res.ok || contentType.includes('text/html') || contentType.includes('application/json')) {
+        let msg = 'El servidor está ocupado o reiniciándose. Intenta de nuevo en unos segundos.';
+        if (contentType.includes('application/json')) {
+          const errData = await res.json().catch(() => null);
+          if (errData && errData.detail) msg = errData.detail;
+        }
+        downloadModal.classList.add('hidden');
+        showAlert(msg, 'error');
+        return;
+      }
+
+      // Extraer el nombre de archivo real (.mp4 / .mp3)
+      const disp = res.headers.get('content-disposition') || '';
+      let filename = isAudio ? 'audio.mp3' : 'video.mp4';
+      const match = disp.match(/filename="([^"]+)"/i);
+      if (match && match[1]) {
+        filename = match[1];
+      }
+
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+
+      downloadModal.classList.add('hidden');
+    } catch (err) {
+      downloadModal.classList.add('hidden');
+      showAlert('Error de conexión al descargar. Intenta de nuevo.', 'error');
+    }
+  }
 
   function setLoading(isLoading) {
     if (isLoading) {
