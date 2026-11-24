@@ -265,17 +265,38 @@ def download_media(url: str, format_id: str, is_audio: bool = False, custom_titl
     out_template = os.path.join(DOWNLOADS_DIR, f"{file_id}_%(title).50s.%(ext)s")
 
     if is_audio:
-        extra_opts = {
-            'format': 'bestaudio/best',
-            'outtmpl': out_template,
-            'concurrent_fragment_downloads': 8,
-            'buffersize': 1024 * 1024,
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '192',
-            }],
-        }
+        # En servidores cloud, los streams solo-audio (DASH) a veces dan 403 sin PO token,
+        # así que probamos primero solo-audio y si falla, extraemos el MP3 del MP4 progresivo (formato 18)
+        audio_format_fallbacks = [
+            'bestaudio[protocol^=http][ext=m4a]/bestaudio[protocol^=http]/bestaudio/best',
+            'best[protocol^=http][ext=mp4]/best',
+        ]
+        downloaded = False
+        last_error = None
+        for fmt_expr in audio_format_fallbacks:
+            extra_opts = {
+                'format': fmt_expr,
+                'outtmpl': out_template,
+                'concurrent_fragment_downloads': 4,
+                'buffersize': 1024 * 1024,
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '192',
+                }],
+            }
+            for strategy in get_client_strategies(url):
+                ydl_opts = build_base_opts(extra_opts, extractor_args=strategy)
+                try:
+                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                        ydl.extract_info(url, download=True)
+                    downloaded = True
+                    break
+                except Exception as e:
+                    last_error = str(e)
+                    continue
+            if downloaded:
+                break
     else:
         if format_id and format_id not in ("best", "bestvideo+bestaudio/best"):
             selected_format = (
@@ -283,7 +304,7 @@ def download_media(url: str, format_id: str, is_audio: bool = False, custom_titl
                 f"{format_id}+bestaudio[protocol^=http][ext=m4a]/"
                 f"{format_id}+bestaudio[ext=m4a]/"
                 f"{format_id}+bestaudio/"
-                f"best[ext=mp4]/best"
+                f"best[protocol^=http][ext=mp4]/best"
             )
         else:
             selected_format = (
@@ -304,18 +325,18 @@ def download_media(url: str, format_id: str, is_audio: bool = False, custom_titl
             },
         }
 
-    downloaded = False
-    last_error = None
-    for strategy in get_client_strategies(url):
-        ydl_opts = build_base_opts(extra_opts, extractor_args=strategy)
-        try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                ydl.extract_info(url, download=True)
-            downloaded = True
-            break
-        except Exception as e:
-            last_error = str(e)
-            continue
+        downloaded = False
+        last_error = None
+        for strategy in get_client_strategies(url):
+            ydl_opts = build_base_opts(extra_opts, extractor_args=strategy)
+            try:
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    ydl.extract_info(url, download=True)
+                downloaded = True
+                break
+            except Exception as e:
+                last_error = str(e)
+                continue
 
     if not downloaded:
         raise ValueError(friendly_error(last_error or "Error al descargar el archivo."))
