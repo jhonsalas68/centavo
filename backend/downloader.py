@@ -27,14 +27,16 @@ def get_ffmpeg_path():
         return "ffmpeg"
 
 def get_cookie_file():
-    """Si existe la variable de entorno YOUTUBE_COOKIES, la guarda en un archivo temporal para yt-dlp."""
+    """Busca cookies en Render Secret Files (/etc/secrets/cookies.txt) o en la variable YOUTUBE_COOKIES."""
+    secret_path = "/etc/secrets/cookies.txt"
+    if os.path.exists(secret_path) and os.path.getsize(secret_path) > 0:
+        return secret_path
     cookies_env = os.environ.get("YOUTUBE_COOKIES", "").strip()
     if not cookies_env:
         return None
     cookie_path = os.path.join(tempfile.gettempdir(), "yt_cookies.txt")
-    if not os.path.exists(cookie_path):
-        with open(cookie_path, "w", encoding="utf-8") as f:
-            f.write(cookies_env)
+    with open(cookie_path, "w", encoding="utf-8") as f:
+        f.write(cookies_env)
     return cookie_path
 
 def is_youtube_url(url: str) -> bool:
@@ -43,6 +45,12 @@ def is_youtube_url(url: str) -> bool:
 def get_client_strategies(url: str):
     """Devuelve estrategias de clientes de yt-dlp para evitar bloqueos de bot en servidores cloud."""
     if is_youtube_url(url):
+        if get_cookie_file():
+            # Con cookies, mweb y web son los más estables y soportan sesión autenticada
+            return [
+                {'youtube': {'player_client': ['mweb', 'web']}},
+                {'youtube': {'player_client': ['web_embedded', 'tv_embedded']}},
+            ]
         return [
             {'youtube': {'player_client': ['tv_embedded', 'android_vr']}},
             {'youtube': {'player_client': ['android', 'mweb']}},
