@@ -19,8 +19,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const audioFormatsList = document.getElementById('audioFormatsList');
 
   const downloadModal = document.getElementById('downloadModal');
-  const countdownTimer = document.getElementById('countdownTimer');
+  const closeDownloadModalBtn = document.getElementById('closeDownloadModalBtn');
+  const modalPreparingState = document.getElementById('modalPreparingState');
+  const modalReadyState = document.getElementById('modalReadyState');
+  const readyFileName = document.getElementById('readyFileName');
+  const finalDownloadLink = document.getElementById('finalDownloadLink');
   const modalProgressBar = document.getElementById('modalProgressBar');
+
+  if (closeDownloadModalBtn && downloadModal) {
+    closeDownloadModalBtn.addEventListener('click', () => downloadModal.classList.add('hidden'));
+  }
 
   const adGuideBtn = document.getElementById('adGuideBtn');
   const adGuideModal = document.getElementById('adGuideModal');
@@ -175,34 +183,24 @@ document.addEventListener('DOMContentLoaded', () => {
     resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
-  // Cuenta regresiva antes de comenzar la descarga
-  window.triggerDownload = (encodedUrl, formatId, isAudio) => {
+  // Preparar archivo en servidor y mostrar botón nativo directo (100% compatible con iOS Safari)
+  window.triggerDownload = async (encodedUrl, formatId, isAudio) => {
     const url = decodeURIComponent(encodedUrl);
-    let count = 3;
-    countdownTimer.textContent = count;
-    modalProgressBar.style.width = '0%';
+    hideAlert();
+
+    modalPreparingState.classList.remove('hidden');
+    modalReadyState.classList.add('hidden');
     downloadModal.classList.remove('hidden');
 
-    const interval = setInterval(() => {
-      count--;
-      countdownTimer.textContent = Math.max(count, 0);
-      modalProgressBar.style.width = `${((3 - Math.max(count, 0)) / 3) * 100}%`;
-
-      if (count <= 0) {
-        clearInterval(interval);
-        startVerifiedDownload(url, formatId, isAudio);
-      }
-    }, 1000);
-  };
-
-  async function startVerifiedDownload(url, formatId, isAudio) {
-    const downloadUrl = `/api/download?url=${encodeURIComponent(url)}&format_id=${encodeURIComponent(formatId)}&is_audio=${isAudio}`;
     try {
-      const res = await fetch(downloadUrl);
-      const contentType = (res.headers.get('content-type') || '').toLowerCase();
+      const res = await fetch('/api/prepare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, format_id: formatId, is_audio: isAudio })
+      });
 
-      // Nunca permitir que el navegador descargue una página HTML de error o JSON
-      if (!res.ok || contentType.includes('text/html') || contentType.includes('application/json')) {
+      const contentType = (res.headers.get('content-type') || '').toLowerCase();
+      if (!res.ok || !contentType.includes('application/json')) {
         let msg = 'El servidor está ocupado o reiniciándose. Intenta de nuevo en unos segundos.';
         if (contentType.includes('application/json')) {
           const errData = await res.json().catch(() => null);
@@ -213,30 +211,25 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // Extraer el nombre de archivo real (.mp4 / .mp3)
-      const disp = res.headers.get('content-disposition') || '';
-      let filename = isAudio ? 'audio.mp3' : 'video.mp4';
-      const match = disp.match(/filename="([^"]+)"/i);
-      if (match && match[1]) {
-        filename = match[1];
+      const data = await res.json();
+      readyFileName.textContent = data.filename;
+      finalDownloadLink.href = data.download_url;
+      finalDownloadLink.setAttribute('download', data.filename);
+
+      modalPreparingState.classList.add('hidden');
+      modalReadyState.classList.remove('hidden');
+
+      // En PC y Android iniciar automáticamente; en iOS el usuario pulsa el botón verde (requisito nativo de Safari)
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      if (!isIOS) {
+        finalDownloadLink.click();
       }
-
-      const blob = await res.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
-
-      downloadModal.classList.add('hidden');
     } catch (err) {
       downloadModal.classList.add('hidden');
-      showAlert('Error de conexión al descargar. Intenta de nuevo.', 'error');
+      showAlert('Error de conexión al preparar la descarga. Intenta de nuevo.', 'error');
     }
-  }
+  };
 
   function setLoading(isLoading) {
     if (isLoading) {
