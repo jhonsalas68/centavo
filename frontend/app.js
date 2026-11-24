@@ -85,8 +85,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // Manejar envío del formulario (Buscar video)
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const url = urlInput.value.trim();
-    if (!url) return;
+    let rawInput = urlInput.value.trim();
+    if (!rawInput) return;
+
+    // Extraer automáticamente la URL si el usuario pegó texto extra desde TikTok/YouTube móvil
+    const urlMatch = rawInput.match(/https?:\/\/[^\s]+/i);
+    const url = urlMatch ? urlMatch[0] : rawInput;
+    urlInput.value = url;
 
     hideAlert();
     setLoading(true);
@@ -98,6 +103,11 @@ document.addEventListener('DOMContentLoaded', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url })
       });
+
+      const contentType = (res.headers.get('content-type') || '').toLowerCase();
+      if (!contentType.includes('application/json')) {
+        throw new Error('El servidor está despertando o ocupado. Espera 10 segundos y vuelve a pulsar "Obtener Enlaces".');
+      }
 
       const data = await res.json();
       if (!res.ok) {
