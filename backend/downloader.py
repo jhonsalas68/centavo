@@ -30,19 +30,17 @@ def get_ffmpeg_path():
         return None
 
 def get_cookie_file():
-    """Copia las cookies a /tmp (escribible) desde Render Secret Files (/etc/secrets/cookies.txt) o YOUTUBE_COOKIES."""
+    """Copia siempre una copia fresca de cookies.txt a /tmp para evitar que yt-dlp corrompa la sesión."""
     cookie_path = os.path.join(tempfile.gettempdir(), "yt_cookies.txt")
     secret_path = "/etc/secrets/cookies.txt"
     if os.path.exists(secret_path) and os.path.getsize(secret_path) > 0:
-        if not os.path.exists(cookie_path) or os.path.getsize(cookie_path) == 0:
-            shutil.copyfile(secret_path, cookie_path)
+        shutil.copyfile(secret_path, cookie_path)
         return cookie_path
     cookies_env = os.environ.get("YOUTUBE_COOKIES", "").strip()
     if not cookies_env:
         return None
-    if not os.path.exists(cookie_path) or os.path.getsize(cookie_path) == 0:
-        with open(cookie_path, "w", encoding="utf-8") as f:
-            f.write(cookies_env)
+    with open(cookie_path, "w", encoding="utf-8") as f:
+        f.write(cookies_env)
     return cookie_path
 
 def is_youtube_url(url: str) -> bool:
