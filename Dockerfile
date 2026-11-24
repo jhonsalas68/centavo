@@ -1,11 +1,15 @@
+FROM denoland/deno:bin AS deno
+
 FROM python:3.11-slim
 
-# Instalar FFmpeg y Node.js (runtime JS requerido por yt-dlp para YouTube y redes sociales)
+# Instalar FFmpeg y certificados SSL
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
-    nodejs \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
+
+# Copiar binario oficial de Deno (runtime JS oficial de yt-dlp para resolver YouTube)
+COPY --from=deno /deno /usr/local/bin/deno
 
 WORKDIR /app
 

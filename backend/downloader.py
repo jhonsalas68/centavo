@@ -113,14 +113,14 @@ def format_size(bytes_size):
 def friendly_error(err_str: str) -> str:
     lower = err_str.lower()
     if "sign in to confirm" in lower or "not a bot" in lower:
-        return "YouTube bloqueó temporalmente esta solicitud desde el servidor. Intenta de nuevo en unos segundos o prueba con otro enlace."
+        return "YouTube bloqueó temporalmente esta solicitud desde el servidor. Verifica tus cookies.txt en Render o intenta con otro enlace."
     if "private video" in lower or "login required" in lower or "only works when logged-in" in lower:
         return "Este video es privado o requiere iniciar sesión para verlo."
-    if "unavailable" in lower or "not available" in lower:
+    if "video unavailable" in lower or "this video is not available" in lower:
         return "El video no está disponible o fue eliminado."
     if "unsupported url" in lower:
         return "El enlace no es válido o la plataforma no es compatible."
-    return f"No se pudo procesar el enlace: {err_str[:180]}"
+    return f"No se pudo procesar el enlace: {err_str[:220]}"
 
 def extract_video_info(url: str):
     """Extrae metadatos y opciones de calidad de la URL sin descargar."""

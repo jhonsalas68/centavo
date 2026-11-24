@@ -82,7 +82,15 @@ async def download_endpoint(
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "service": "Video Downloader API"}
+    import shutil
+    from backend.downloader import get_cookie_file
+    return {
+        "status": "ok",
+        "service": "Video Downloader API",
+        "version": "2.1-deno",
+        "has_deno": bool(shutil.which("deno")),
+        "has_cookies": bool(get_cookie_file()),
+    }
 
 # Servir archivos estáticos del frontend
 FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend"))
