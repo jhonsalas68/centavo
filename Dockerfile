@@ -1,15 +1,17 @@
 FROM python:3.11-slim
 
-# Instalar FFmpeg en el sistema Linux del contenedor
+# Instalar FFmpeg y Node.js (runtime JS requerido por yt-dlp para YouTube y redes sociales)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
+    nodejs \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Instalar librerías de Python
+# Instalar librerías de Python (siempre la última versión de yt-dlp)
 COPY backend/requirements.txt requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
 # Copiar el código de la aplicación
 COPY backend/ backend/

@@ -43,18 +43,20 @@
         <span class="flex items-center hover:text-blue-400 transition-colors"><i class="fa-brands fa-x-twitter mr-1 text-slate-200 text-sm"></i> Twitter/X</span>
         <span class="flex items-center hover:text-blue-500 transition-colors"><i class="fa-brands fa-facebook mr-1 text-blue-500 text-sm"></i> Facebook</span>
       </div>
-
-      <button id="adGuideBtn" class="text-[11px] sm:text-xs font-semibold bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-300 px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-1.5">
-        <i class="fa-solid fa-bullhorn text-amber-400"></i> <span class="hidden xs:inline">Info</span> Anuncios
-      </button>
     </div>
   </header>
 
-  <!-- ================= TOP AD BANNER ================= -->
+  <!-- ================= TOP AD BANNER (AISLADO EN IFRAME SEGURO) ================= -->
   <section class="max-w-5xl mx-auto w-full px-3 sm:px-4 pt-3">
-    <div class="rounded-xl overflow-hidden border border-slate-800 bg-slate-900/60 p-2 text-center min-h-[50px] flex items-center justify-center">
-      <script async fetchpriority="high" data-cfasync="false" src="https://bellnewyork.org/21/b5e380e5763ba820f3a639f2b27ac12c"></script>
-      <div id="container-b5e380e5763ba820f3a639f2b27ac12c" class="w-full"></div>
+    <div class="rounded-xl overflow-hidden border border-slate-800 bg-slate-900/60 p-1.5 text-center">
+      <iframe
+        src="/ad-banner.html"
+        title="Publicidad"
+        sandbox="allow-scripts allow-same-origin allow-popups"
+        scrolling="no"
+        frameborder="0"
+        class="w-full h-[95px] sm:h-[115px] border-0 overflow-hidden rounded-lg block"
+      ></iframe>
     </div>
   </section>
 

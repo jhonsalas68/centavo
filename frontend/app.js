@@ -63,10 +63,16 @@ document.addEventListener('DOMContentLoaded', () => {
     videoFormatsList.classList.add('hidden');
   });
 
-  // Modales de guía de anuncios
-  adGuideBtn.addEventListener('click', () => adGuideModal.classList.remove('hidden'));
-  closeAdGuideBtn.addEventListener('click', () => adGuideModal.classList.add('hidden'));
-  closeAdGuideBtn2.addEventListener('click', () => adGuideModal.classList.add('hidden'));
+  // Modales de guía de anuncios (si existen en el DOM)
+  if (adGuideBtn && adGuideModal) {
+    adGuideBtn.addEventListener('click', () => adGuideModal.classList.remove('hidden'));
+  }
+  if (closeAdGuideBtn && adGuideModal) {
+    closeAdGuideBtn.addEventListener('click', () => adGuideModal.classList.add('hidden'));
+  }
+  if (closeAdGuideBtn2 && adGuideModal) {
+    closeAdGuideBtn2.addEventListener('click', () => adGuideModal.classList.add('hidden'));
+  }
 
   // Manejar envío del formulario (Buscar video)
   form.addEventListener('submit', async (e) => {
