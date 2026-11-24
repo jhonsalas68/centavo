@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OmniDownloader - Descarga Videos y Música Gratis</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
+
+  <!-- ================= NAVBAR ================= -->
+  <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur-md sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="window.location.reload()">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-rose-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+          <i class="fa-solid fa-cloud-arrow-down text-white text-xl"></i>
+        </div>
+        <div>
+          <span class="text-xl font-black bg-gradient-to-r from-indigo-400 via-purple-300 to-rose-400 bg-clip-text text-transparent">
+            OmniDownloader
+          </span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-semibold border border-indigo-500/30 ml-1">PRO</span>
+        </div>
+      </div>
+
+      <!-- Quick Platform Support Badges -->
+      <div class="hidden md:flex items-center space-x-4 text-xs font-medium text-slate-400">
+        <span class="flex items-center hover:text-red-400 transition-colors"><i class="fa-brands fa-youtube mr-1 text-red-500 text-sm"></i> YouTube</span>
+        <span class="flex items-center hover:text-pink-400 transition-colors"><i class="fa-brands fa-tiktok mr-1 text-pink-400 text-sm"></i> TikTok</span>
+        <span class="flex items-center hover:text-purple-400 transition-colors"><i class="fa-brands fa-instagram mr-1 text-purple-400 text-sm"></i> Instagram</span>
+        <span class="flex items-center hover:text-blue-400 transition-colors"><i class="fa-brands fa-x-twitter mr-1 text-slate-200 text-sm"></i> Twitter/X</span>
+        <span class="flex items-center hover:text-blue-500 transition-colors"><i class="fa-brands fa-facebook mr-1 text-blue-500 text-sm"></i> Facebook</span>
+      </div>
+
+      <button id="adGuideBtn" class="text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+        <i class="fa-solid fa-bullhorn text-amber-400"></i> Configurar Anuncios
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= TOP AD BANNER (LEADERBOARD) ================= -->
+  <!-- Espacio para banner horizontal 728x90 (Desktop) / 320x50 (Móvil) -->
+  <section class="max-w-5xl mx-auto w-full px-4 pt-4">
+    <div class="ad-slot ad-leaderboard border border-dashed border-amber-500/40 bg-amber-500/5 rounded-xl p-3 flex flex-col items-center justify-center text-center transition-all hover:bg-amber-500/10">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
+          Espacio de Anuncio #1 (Header 728x90 / 300x50)
+        </span>
+      </div>
+      <p class="text-xs text-slate-400">
+        Aquí se inserta el código de tu red publicitaria (Adsterra, Monetag o PopAds).
+      </p>
+      <!-- REEMPLAZAR AQUÍ CON TU CÓDIGO DE ANUNCIOS REAL -->
+      <div class="w-full max-w-[728px] h-[70px] bg-slate-800/80 rounded-lg mt-1 border border-slate-700 flex items-center justify-center text-slate-500 text-xs">
+        <i class="fa-solid fa-rectangle-ad text-lg mr-2 text-slate-400"></i> Banner Publicitario Superior
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MAIN DOWNLOAD SECTION ================= -->
+  <main class="flex-grow max-w-4xl mx-auto w-full px-4 py-8">
+    
+    <!-- Hero Title -->
+    <div class="text-center mb-8">
+      <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight mb-3">
+        Descarga Videos en <span class="bg-gradient-to-r from-indigo-400 via-rose-400 to-amber-300 bg-clip-text text-transparent">Máxima Calidad</span>
+      </h1>
+      <p class="text-slate-400 text-sm sm:text-base max-w-xl mx-auto">
+        Compatible con YouTube, TikTok, Instagram Reels, Facebook, Twitter y más de 1000 plataformas. Sin límites y 100% gratis.
+      </p>
+    </div>
+
+    <!-- Input Card -->
+    <div class="bg-slate-900/90 border border-slate-800 p-3 sm:p-4 rounded-2xl shadow-2xl backdrop-blur-xl relative mb-8 focus-within:border-indigo-500/60 transition-all">
+      <form id="downloadForm" class="flex flex-col sm:flex-row gap-2">
+        <div class="relative flex-grow flex items-center">
+          <i class="fa-solid fa-link absolute left-4 text-slate-500"></i>
+          <input 
+            type="url" 
+            id="urlInput" 
+            placeholder="Pega el enlace del video aquí (ej: https://www.youtube.com/watch?v=...)" 
+            required 
+            class="w-full bg-slate-950/80 border border-slate-800 text-slate-100 placeholder-slate-500 text-sm sm:text-base rounded-xl pl-11 pr-24 py-3.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+          >
+          <!-- Botón Rápido Pegar -->
+          <button 
+            type="button" 
+            id="pasteBtn" 
+            title="Pegar del portapapeles"
+            class="absolute right-2 px-2.5 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 transition flex items-center gap-1"
+          >
+            <i class="fa-regular fa-clipboard"></i> Pegar
+          </button>
+        </div>
+
+        <button 
+          type="submit" 
+          id="fetchBtn" 
+          class="bg-gradient-to-r from-indigo-600 to-rose-600 hover:from-indigo-500 hover:to-rose-500 text-white font-bold px-6 py-3.5 rounded-xl shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <span id="btnText">Obtener Enlaces</span>
+          <i class="fa-solid fa-arrow-right text-sm"></i>
+        </button>
+      </form>
+
+      <!-- Feedback / Error Message -->
+      <div id="alertBox" class="hidden mt-3 p-3 rounded-xl text-xs sm:text-sm font-medium border"></div>
+    </div>
+
+    <!-- ================= RESULTS CARD (Inicialmente Oculto) ================= -->
+    <div id="resultCard" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-2xl mb-8 transition-all animate-fade-in">
+      <div class="flex flex-col md:flex-row gap-6 items-start">
+        <!-- Thumbnail -->
+        <div class="w-full md:w-5/12 flex-shrink-0">
+          <div class="relative rounded-xl overflow-hidden shadow-lg border border-slate-800 bg-slate-950 aspect-video flex items-center justify-center">
+            <img id="videoThumb" src="" alt="Thumbnail" class="w-full h-full object-cover">
+            <span id="videoDuration" class="absolute bottom-2 right-2 bg-black/80 backdrop-blur text-white text-xs px-2 py-0.5 rounded font-mono font-medium"></span>
+            <span id="videoPlatform" class="absolute top-2 left-2 bg-indigo-600/90 text-white text-[11px] px-2 py-0.5 rounded font-semibold uppercase tracking-wider"></span>
+          </div>
+          <h2 id="videoTitle" class="font-bold text-base sm:text-lg text-slate-100 mt-3 line-clamp-2"></h2>
+          <p id="videoAuthor" class="text-xs text-slate-400 mt-1 flex items-center gap-1">
+            <i class="fa-solid fa-circle-user text-indigo-400"></i> <span></span>
+          </p>
+        </div>
+
+        <!-- Format Options -->
+        <div class="w-full md:w-7/12 flex flex-col justify-between">
+          <div>
+            <!-- Tabs: Video vs Audio -->
+            <div class="flex border-b border-slate-800 mb-4">
+              <button id="tabVideo" class="tab-btn active px-4 py-2 font-bold text-sm border-b-2 border-indigo-500 text-indigo-400 flex items-center gap-2">
+                <i class="fa-solid fa-film"></i> Video (MP4)
+              </button>
+              <button id="tabAudio" class="tab-btn px-4 py-2 font-bold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2">
+                <i class="fa-solid fa-music"></i> Audio (MP3)
+              </button>
+            </div>
+
+            <!-- List of Video Formats -->
+            <div id="videoFormatsList" class="space-y-2 max-h-72 overflow-y-auto pr-1">
+              <!-- Rellenado dinámicamente -->
+            </div>
+
+            <!-- List of Audio Formats -->
+            <div id="audioFormatsList" class="hidden space-y-2">
+              <!-- Rellenado dinámicamente -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= IN-CONTENT AD BANNER (NATIVE AD) ================= -->
+      <!-- Este anuncio está colocado estratégicamente justo antes de que el usuario descargue -->
+      <div class="mt-6 pt-4 border-t border-slate-800">
+        <div class="ad-slot border border-dashed border-emerald-500/40 bg-emerald-500/5 rounded-xl p-3 flex flex-col items-center justify-center text-center transition-all hover:bg-emerald-500/10">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              Espacio de Anuncio #2 (In-Feed Nativo / 300x250)
+            </span>
+          </div>
+          <p class="text-xs text-slate-400 mb-2">
+            Ubicación de alta conversión: se muestra cuando el usuario ya encontró el video y se prepara a descargar.
+          </p>
+          <div class="w-full max-w-[320px] h-[100px] bg-slate-800/80 rounded-lg border border-slate-700 flex items-center justify-center text-slate-500 text-xs">
+            <i class="fa-solid fa-badge-dollar text-xl mr-2 text-emerald-400"></i> Anuncio Nativo / Rectángulo
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= FEATURES / SEO SECTION ================= -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+      <div class="bg-slate-900/60 border border-slate-800 p-5 rounded-xl">
+        <div class="w-10 h-10 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center mb-3 text-lg">
+          <i class="fa-solid fa-bolt"></i>
+        </div>
+        <h3 class="font-bold text-slate-200 text-sm mb-1">Ultra Rápido y Sin Esperas</h3>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Procesamiento directo para entregar enlaces de descarga limpios a máxima velocidad de tu conexión.
+        </p>
+      </div>
+
+      <div class="bg-slate-900/60 border border-slate-800 p-5 rounded-xl">
+        <div class="w-10 h-10 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center mb-3 text-lg">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <h3 class="font-bold text-slate-200 text-sm mb-1">Seguro y Privado</h3>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          No almacenamos tus datos ni guardamos copias permanentes. Los archivos se borran tras cada descarga.
+        </p>
+      </div>
+
+      <div class="bg-slate-900/60 border border-slate-800 p-5 rounded-xl">
+        <div class="w-10 h-10 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center mb-3 text-lg">
+          <i class="fa-solid fa-photo-film"></i>
+        </div>
+        <h3 class="font-bold text-slate-200 text-sm mb-1">HD, 4K y Audio MP3</h3>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Elige entre calidad original, Full HD 1080p o extrae el audio en formato MP3 con un solo clic.
+        </p>
+      </div>
+    </div>
+
+    <!-- ================= AD BANNER BOTTOM ================= -->
+    <div class="mt-8">
+      <div class="ad-slot border border-dashed border-indigo-500/40 bg-indigo-500/5 rounded-xl p-3 flex flex-col items-center justify-center text-center">
+        <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 mb-1">
+          Espacio de Anuncio #3 (Footer Leaderboard 728x90)
+        </span>
+        <div class="w-full max-w-[728px] h-[60px] bg-slate-800/80 rounded-lg mt-1 border border-slate-700 flex items-center justify-center text-slate-500 text-xs">
+          <i class="fa-solid fa-bullhorn mr-2 text-indigo-400"></i> Banner Publicitario Inferior
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ================= DOWNLOAD INTERSTITIAL MODAL (MONETIZACIÓN MÁXIMA) ================= -->
+  <!-- Este modal simula la cuenta regresiva antes de descargar, mostrando un anuncio durante 3 segundos -->
+  <div id="downloadModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 text-center shadow-2xl relative">
+      <div class="w-14 h-14 mx-auto rounded-full bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center text-2xl mb-4 animate-bounce">
+        <i class="fa-solid fa-download"></i>
+      </div>
+
+      <h3 class="text-lg font-bold text-slate-100 mb-1">Preparando tu archivo...</h3>
+      <p class="text-xs text-slate-400 mb-4">Tu descarga comenzará en <span id="countdownTimer" class="font-bold text-indigo-400 text-base">3</span> segundos</p>
+
+      <!-- AD SLOT DENTRO DEL MODAL (CTR muy alto) -->
+      <div class="border border-dashed border-amber-500/40 bg-amber-500/10 rounded-xl p-4 mb-4 text-xs text-slate-300">
+        <span class="text-[9px] uppercase font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">Anuncio Intersticial</span>
+        <div class="h-28 bg-slate-950 rounded border border-slate-800 flex items-center justify-center mt-2 text-slate-400">
+          Espacio para Anuncio Popunder o Banner Intersticial
+        </div>
+      </div>
+
+      <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+        <div id="modalProgressBar" class="bg-indigo-500 h-full w-0 transition-all duration-1000 ease-linear"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL DE CONFIGURACIÓN DE ANUNCIOS ================= -->
+  <div id="adGuideModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative max-h-[85vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+        <h3 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-coins text-amber-400"></i> Guía para Monetizar tu Web con Anuncios
+        </h3>
+        <button id="closeAdGuideBtn" class="text-slate-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-xs sm:text-sm text-slate-300 leading-relaxed">
+        <div class="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-300 text-xs">
+          <strong>⚠️ Nota sobre AdSense:</strong> Google AdSense rechaza webs de descarga de videos. Debes registrarte en redes alternativas que acepten tráfico de descarga multimedia.
+        </div>
+
+        <h4 class="font-bold text-indigo-400 text-base">Redes recomendadas:</h4>
+        <ul class="list-disc pl-5 space-y-1">
+          <li><strong>Monetag (PropellerAds):</strong> Ideal para banners, push y OnClick (popunders). Paga por PayPal, transferencia o cripto.</li>
+          <li><strong>Adsterra:</strong> Aprobación instantánea. Ofrece Social Bar, Popunders y banners clásicos (728x90, 300x250).</li>
+          <li><strong>PopAds / ExoClick:</strong> Especialistas en ventanas emergentes de alto volumen.</li>
+        </ul>
+
+        <h4 class="font-bold text-indigo-400 text-base">¿Dónde pegar tus códigos de anuncios?</h4>
+        <p>Abre el archivo <code class="bg-slate-800 px-1 py-0.5 rounded text-indigo-300">frontend/index.html</code> y busca las secciones:</p>
+        <ol class="list-decimal pl-5 space-y-1">
+          <li><strong>Espacio #1 (Header):</strong> Línea con la clase <code class="bg-slate-800 px-1 py-0.5 rounded text-amber-300">ad-leaderboard</code> (728x90).</li>
+          <li><strong>Espacio #2 (In-Feed):</strong> Debajo de la lista de descargas (300x250).</li>
+          <li><strong>Espacio #3 (Modal de Espera):</strong> En el modal antes de comenzar la descarga.</li>
+          <li><strong>Script de Popunder:</strong> Pégalo justo antes de la etiqueta <code class="bg-slate-800 px-1 py-0.5 rounded">&lt;/body&gt;</code>.</li>
+        </ol>
+      </div>
+
+      <div class="mt-6 flex justify-end">
+        <button id="closeAdGuideBtn2" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-2 rounded-xl text-xs transition">
+          Entendido
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="border-t border-slate-900 bg-slate-950 py-6 text-center text-xs text-slate-500">
+    <p>© 2026 OmniDownloader. Para fines educativos y de respaldo personal.</p>
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>

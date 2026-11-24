@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: centavo
+    runtime: docker
+    plan: free
+    region: frankfurt
+    branch: main
+    healthCheckPath: /api/health
+    envVars:
+      - key: PORT
+        value: 8000
