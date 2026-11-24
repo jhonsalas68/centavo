@@ -111,25 +111,25 @@ document.addEventListener('DOMContentLoaded', () => {
     if (data.video_formats && data.video_formats.length > 0) {
       data.video_formats.forEach(f => {
         const item = document.createElement('div');
-        item.className = 'flex items-center justify-between p-3 bg-slate-950/60 border border-slate-800 rounded-xl hover:border-indigo-500/50 transition-colors';
+        item.className = 'flex items-center justify-between gap-2 p-2.5 sm:p-3 bg-slate-950/70 border border-slate-800 rounded-xl hover:border-indigo-500/50 transition-colors';
         item.innerHTML = `
-          <div class="flex items-center gap-3">
-            <span class="w-8 h-8 rounded-lg bg-indigo-600/10 text-indigo-400 flex items-center justify-center font-bold text-xs">
-              <i class="fa-solid fa-play text-[10px]"></i>
+          <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+            <span class="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 rounded-lg bg-indigo-600/10 text-indigo-400 flex items-center justify-center font-bold text-xs">
+              <i class="fa-solid fa-play text-[9px] sm:text-[10px]"></i>
             </span>
-            <div>
-              <div class="font-bold text-sm text-slate-100 flex items-center gap-1.5">
+            <div class="min-w-0">
+              <div class="font-bold text-xs sm:text-sm text-slate-100 flex items-center gap-1.5 truncate">
                 ${f.label}
-                <span class="text-[10px] px-1.5 py-0.2 bg-slate-800 text-slate-400 rounded">${f.ext.toUpperCase()}</span>
+                <span class="text-[9px] px-1 py-0.2 bg-slate-800 text-slate-400 rounded uppercase font-normal">${f.ext}</span>
               </div>
-              <div class="text-[11px] text-slate-400">Tamaño estimado: <span class="font-medium text-slate-300">${f.size}</span></div>
+              <div class="text-[10px] sm:text-[11px] text-slate-400 truncate">Tamaño: <span class="font-medium text-slate-300">${f.size}</span></div>
             </div>
           </div>
           <button 
             onclick="triggerDownload('${encodeURIComponent(data.url)}', '${f.format_id}', false)"
-            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-indigo-600/20 active:scale-95"
+            class="flex-shrink-0 px-3 sm:px-4 py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-md shadow-indigo-600/20 active:scale-95"
           >
-            <i class="fa-solid fa-download"></i> Descargar
+            <i class="fa-solid fa-download"></i> <span>Descargar</span>
           </button>
         `;
         videoFormatsList.appendChild(item);
@@ -143,22 +143,22 @@ document.addEventListener('DOMContentLoaded', () => {
     if (data.audio_formats && data.audio_formats.length > 0) {
       data.audio_formats.forEach(a => {
         const item = document.createElement('div');
-        item.className = 'flex items-center justify-between p-3 bg-slate-950/60 border border-slate-800 rounded-xl hover:border-rose-500/50 transition-colors';
+        item.className = 'flex items-center justify-between gap-2 p-2.5 sm:p-3 bg-slate-950/70 border border-slate-800 rounded-xl hover:border-rose-500/50 transition-colors';
         item.innerHTML = `
-          <div class="flex items-center gap-3">
-            <span class="w-8 h-8 rounded-lg bg-rose-600/10 text-rose-400 flex items-center justify-center font-bold text-xs">
-              <i class="fa-solid fa-music text-[10px]"></i>
+          <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+            <span class="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 rounded-lg bg-rose-600/10 text-rose-400 flex items-center justify-center font-bold text-xs">
+              <i class="fa-solid fa-music text-[9px] sm:text-[10px]"></i>
             </span>
-            <div>
-              <div class="font-bold text-sm text-slate-100">${a.label}</div>
-              <div class="text-[11px] text-slate-400">Calidad: <span class="font-medium text-slate-300">${a.quality}</span></div>
+            <div class="min-w-0">
+              <div class="font-bold text-xs sm:text-sm text-slate-100 truncate">${a.label}</div>
+              <div class="text-[10px] sm:text-[11px] text-slate-400 truncate">Calidad: <span class="font-medium text-slate-300">${a.quality}</span></div>
             </div>
           </div>
           <button 
             onclick="triggerDownload('${encodeURIComponent(data.url)}', '${a.format_id}', true)"
-            class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-rose-600/20 active:scale-95"
+            class="flex-shrink-0 px-3 sm:px-4 py-2 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-md shadow-rose-600/20 active:scale-95"
           >
-            <i class="fa-solid fa-download"></i> Descargar MP3
+            <i class="fa-solid fa-download"></i> <span>Descargar MP3</span>
           </button>
         `;
         audioFormatsList.appendChild(item);

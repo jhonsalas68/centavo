@@ -2,7 +2,7 @@
 <html lang="es" class="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
   <title>OmniDownloader - Descarga Videos y Música Gratis</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -10,24 +10,24 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="/style.css">
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
+<body class="bg-slate-950 text-slate-100 min-h-[100dvh] flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
 
   <!-- ================= NAVBAR ================= -->
-  <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur-md sticky top-0 z-40">
-    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-      <div class="flex items-center space-x-3 cursor-pointer" onclick="window.location.reload()">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-rose-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-          <i class="fa-solid fa-cloud-arrow-down text-white text-xl"></i>
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-40" style="padding-top: var(--sat);">
+    <div class="max-w-6xl mx-auto px-4 h-14 sm:h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-2.5 cursor-pointer" onclick="window.location.reload()">
+        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-rose-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+          <i class="fa-solid fa-cloud-arrow-down text-white text-base sm:text-xl"></i>
         </div>
         <div>
-          <span class="text-xl font-black bg-gradient-to-r from-indigo-400 via-purple-300 to-rose-400 bg-clip-text text-transparent">
+          <span class="text-lg sm:text-xl font-black bg-gradient-to-r from-indigo-400 via-purple-300 to-rose-400 bg-clip-text text-transparent">
             OmniDownloader
           </span>
-          <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-semibold border border-indigo-500/30 ml-1">PRO</span>
+          <span class="text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-semibold border border-indigo-500/30 ml-0.5">PRO</span>
         </div>
       </div>
 
-      <!-- Quick Platform Support Badges -->
+      <!-- Quick Platform Support Badges (Desktop) -->
       <div class="hidden md:flex items-center space-x-4 text-xs font-medium text-slate-400">
         <span class="flex items-center hover:text-red-400 transition-colors"><i class="fa-brands fa-youtube mr-1 text-red-500 text-sm"></i> YouTube</span>
         <span class="flex items-center hover:text-pink-400 transition-colors"><i class="fa-brands fa-tiktok mr-1 text-pink-400 text-sm"></i> TikTok</span>
@@ -36,51 +36,51 @@
         <span class="flex items-center hover:text-blue-500 transition-colors"><i class="fa-brands fa-facebook mr-1 text-blue-500 text-sm"></i> Facebook</span>
       </div>
 
-      <button id="adGuideBtn" class="text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-1.5">
-        <i class="fa-solid fa-bullhorn text-amber-400"></i> Configurar Anuncios
+      <button id="adGuideBtn" class="text-[11px] sm:text-xs font-semibold bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-300 px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+        <i class="fa-solid fa-bullhorn text-amber-400"></i> <span class="hidden xs:inline">Info</span> Anuncios
       </button>
     </div>
   </header>
 
-  <!-- ================= TOP AD BANNER (NATIVE BANNER 4:1) ================= -->
-  <section class="max-w-5xl mx-auto w-full px-4 pt-4">
-    <div class="rounded-xl overflow-hidden border border-slate-800 bg-slate-900/60 p-2 text-center">
+  <!-- ================= TOP AD BANNER ================= -->
+  <section class="max-w-5xl mx-auto w-full px-3 sm:px-4 pt-3">
+    <div class="rounded-xl overflow-hidden border border-slate-800 bg-slate-900/60 p-2 text-center min-h-[50px] flex items-center justify-center">
       <script async fetchpriority="high" data-cfasync="false" src="https://bellnewyork.org/21/b5e380e5763ba820f3a639f2b27ac12c"></script>
-      <div id="container-b5e380e5763ba820f3a639f2b27ac12c"></div>
+      <div id="container-b5e380e5763ba820f3a639f2b27ac12c" class="w-full"></div>
     </div>
   </section>
 
   <!-- ================= MAIN DOWNLOAD SECTION ================= -->
-  <main class="flex-grow max-w-4xl mx-auto w-full px-4 py-8">
+  <main class="flex-grow max-w-4xl mx-auto w-full px-3 sm:px-4 py-5 sm:py-8">
     
     <!-- Hero Title -->
-    <div class="text-center mb-8">
-      <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight mb-3">
+    <div class="text-center mb-5 sm:mb-8">
+      <h1 class="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-2 sm:mb-3">
         Descarga Videos en <span class="bg-gradient-to-r from-indigo-400 via-rose-400 to-amber-300 bg-clip-text text-transparent">Máxima Calidad</span>
       </h1>
-      <p class="text-slate-400 text-sm sm:text-base max-w-xl mx-auto">
-        Compatible con YouTube, TikTok, Instagram Reels, Facebook, Twitter y más de 1000 plataformas. Sin límites y 100% gratis.
+      <p class="text-slate-400 text-xs sm:text-sm md:text-base max-w-xl mx-auto px-2">
+        Compatible con YouTube, TikTok, Instagram Reels, Facebook, Twitter y +1000 plataformas.
       </p>
     </div>
 
     <!-- Input Card -->
-    <div class="bg-slate-900/90 border border-slate-800 p-3 sm:p-4 rounded-2xl shadow-2xl backdrop-blur-xl relative mb-8 focus-within:border-indigo-500/60 transition-all">
+    <div class="bg-slate-900/95 border border-slate-800 p-2.5 sm:p-4 rounded-2xl shadow-2xl backdrop-blur-xl relative mb-6 focus-within:border-indigo-500/60 transition-all">
       <form id="downloadForm" class="flex flex-col sm:flex-row gap-2">
         <div class="relative flex-grow flex items-center">
-          <i class="fa-solid fa-link absolute left-4 text-slate-500"></i>
+          <i class="fa-solid fa-link absolute left-3.5 text-slate-500 text-sm"></i>
           <input 
             type="url" 
             id="urlInput" 
-            placeholder="Pega el enlace del video aquí (ej: https://www.youtube.com/watch?v=...)" 
+            placeholder="Pega el enlace del video aquí..." 
             required 
-            class="w-full bg-slate-950/80 border border-slate-800 text-slate-100 placeholder-slate-500 text-sm sm:text-base rounded-xl pl-11 pr-24 py-3.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+            class="w-full bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-500 text-base rounded-xl pl-10 pr-20 py-3 sm:py-3.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
           >
           <!-- Botón Rápido Pegar -->
           <button 
             type="button" 
             id="pasteBtn" 
             title="Pegar del portapapeles"
-            class="absolute right-2 px-2.5 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 transition flex items-center gap-1"
+            class="absolute right-2 px-2.5 py-1.5 text-xs font-bold bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-200 rounded-lg border border-slate-700 transition flex items-center gap-1"
           >
             <i class="fa-regular fa-clipboard"></i> Pegar
           </button>
@@ -89,7 +89,7 @@
         <button 
           type="submit" 
           id="fetchBtn" 
-          class="bg-gradient-to-r from-indigo-600 to-rose-600 hover:from-indigo-500 hover:to-rose-500 text-white font-bold px-6 py-3.5 rounded-xl shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-rose-600 hover:from-indigo-500 hover:to-rose-500 text-white font-bold px-6 py-3 sm:py-3.5 rounded-xl shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span id="btnText">Obtener Enlaces</span>
           <i class="fa-solid fa-arrow-right text-sm"></i>
@@ -97,21 +97,21 @@
       </form>
 
       <!-- Feedback / Error Message -->
-      <div id="alertBox" class="hidden mt-3 p-3 rounded-xl text-xs sm:text-sm font-medium border"></div>
+      <div id="alertBox" class="hidden mt-3 p-3 rounded-xl text-xs sm:text-sm font-medium border break-words-custom"></div>
     </div>
 
     <!-- ================= RESULTS CARD (Inicialmente Oculto) ================= -->
-    <div id="resultCard" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-2xl mb-8 transition-all animate-fade-in">
-      <div class="flex flex-col md:flex-row gap-6 items-start">
+    <div id="resultCard" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-3.5 sm:p-6 shadow-2xl mb-8 transition-all animate-fade-in">
+      <div class="flex flex-col md:flex-row gap-4 sm:gap-6 items-start">
         <!-- Thumbnail -->
         <div class="w-full md:w-5/12 flex-shrink-0">
           <div class="relative rounded-xl overflow-hidden shadow-lg border border-slate-800 bg-slate-950 aspect-video flex items-center justify-center">
             <img id="videoThumb" src="" alt="Thumbnail" class="w-full h-full object-cover">
-            <span id="videoDuration" class="absolute bottom-2 right-2 bg-black/80 backdrop-blur text-white text-xs px-2 py-0.5 rounded font-mono font-medium"></span>
-            <span id="videoPlatform" class="absolute top-2 left-2 bg-indigo-600/90 text-white text-[11px] px-2 py-0.5 rounded font-semibold uppercase tracking-wider"></span>
+            <span id="videoDuration" class="absolute bottom-2 right-2 bg-black/80 backdrop-blur text-white text-[11px] sm:text-xs px-2 py-0.5 rounded font-mono font-medium"></span>
+            <span id="videoPlatform" class="absolute top-2 left-2 bg-indigo-600/90 text-white text-[10px] sm:text-[11px] px-2 py-0.5 rounded font-semibold uppercase tracking-wider"></span>
           </div>
-          <h2 id="videoTitle" class="font-bold text-base sm:text-lg text-slate-100 mt-3 line-clamp-2"></h2>
-          <p id="videoAuthor" class="text-xs text-slate-400 mt-1 flex items-center gap-1">
+          <h2 id="videoTitle" class="font-bold text-sm sm:text-base md:text-lg text-slate-100 mt-2.5 sm:mt-3 line-clamp-2 break-words-custom"></h2>
+          <p id="videoAuthor" class="text-xs text-slate-400 mt-1 flex items-center gap-1 truncate">
             <i class="fa-solid fa-circle-user text-indigo-400"></i> <span></span>
           </p>
         </div>
@@ -119,12 +119,12 @@
         <!-- Format Options -->
         <div class="w-full md:w-7/12 flex flex-col justify-between">
           <div>
-            <!-- Tabs: Video vs Audio -->
-            <div class="flex border-b border-slate-800 mb-4">
-              <button id="tabVideo" class="tab-btn active px-4 py-2 font-bold text-sm border-b-2 border-indigo-500 text-indigo-400 flex items-center gap-2">
+            <!-- Tabs: Video vs Audio (adaptadas a móviles en rejilla 2 cols) -->
+            <div class="grid grid-cols-2 border-b border-slate-800 mb-3 sm:mb-4">
+              <button id="tabVideo" class="tab-btn active py-2.5 font-bold text-xs sm:text-sm border-b-2 border-indigo-500 text-indigo-400 flex items-center justify-center gap-1.5 sm:gap-2">
                 <i class="fa-solid fa-film"></i> Video (MP4)
               </button>
-              <button id="tabAudio" class="tab-btn px-4 py-2 font-bold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2">
+              <button id="tabAudio" class="tab-btn py-2.5 font-bold text-xs sm:text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 sm:gap-2">
                 <i class="fa-solid fa-music"></i> Audio (MP3)
               </button>
             </div>
