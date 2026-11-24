@@ -61,13 +61,15 @@ async def download_endpoint(
 
         media_type = "audio/mpeg" if is_audio else "video/mp4"
         
-        # Sanitizar nombre para cabeceras HTTP (los navegadores y Uvicorn exigen ASCII en latin-1)
-        # RFC 5987 / RFC 6266 permite UTF-8 seguro mediante filename*=UTF-8''...
-        safe_ascii_name = re.sub(r'[^\x20-\x7E]', '_', clean_filename).strip() or "video"
-        encoded_filename = quote(clean_filename)
+        # Sanitizar nombre para cabeceras HTTP garantizando compatibilidad 100% con iOS Safari
+        target_ext = ".mp3" if is_audio else ".mp4"
+        raw_base = os.path.splitext(clean_filename)[0]
+        safe_base = re.sub(r'[^a-zA-Z0-9_\- ]', '_', raw_base).strip()[:50] or "video"
+        safe_ascii_name = f"{safe_base}{target_ext}"
+        encoded_filename = quote(f"{raw_base[:60]}{target_ext}")
 
         headers = {
-            "Content-Disposition": f"attachment; filename=\"{safe_ascii_name}\"; filename*=UTF-8''{encoded_filename}"
+            "Content-Disposition": f'attachment; filename="{safe_ascii_name}"; filename*=UTF-8\'\'{encoded_filename}'
         }
 
         return FileResponse(

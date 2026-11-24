@@ -190,10 +190,12 @@ def download_media(url: str, format_id: str, is_audio: bool = False, custom_titl
             'outtmpl': out_template,
             'ffmpeg_location': ffmpeg_exe,
             'merge_output_format': 'mp4',
+            'remux_video': 'mp4',
             'concurrent_fragment_downloads': 10,
             'buffersize': 1024 * 1024,
             'postprocessor_args': {
-                'Merger': ['-c', 'copy']
+                'Merger': ['-c:v', 'copy', '-c:a', 'aac'],
+                'VideoRemuxer': ['-c:v', 'copy', '-c:a', 'aac']
             },
             'quiet': True,
             'no_warnings': True
@@ -214,6 +216,12 @@ def download_media(url: str, format_id: str, is_audio: bool = False, custom_titl
     filename = os.path.basename(file_path)
     # Limpiar el prefijo de id para el nombre que ve el usuario
     clean_name = filename[9:] if len(filename) > 9 else filename
+
+    # Garantizar extensión correcta para compatibilidad total con iOS y Safari
+    expected_ext = ".mp3" if is_audio else ".mp4"
+    base_part, cur_ext = os.path.splitext(clean_name)
+    if not cur_ext or cur_ext.lower() != expected_ext:
+        clean_name = f"{base_part}{expected_ext}"
 
     return file_path, clean_name
 
